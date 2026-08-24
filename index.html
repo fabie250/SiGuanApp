@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>丝衡 · 智能耗材管理</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "MiSans", "PingFang SC", "Helvetica Neue", Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(30, 30, 40, 0.6);
+            --bg-dock: rgba(20, 20, 30, 0.75);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.6);
+            --text-tertiary: rgba(255,255,255,0.4);
+            --accent-blue: #007aff;
+            --accent-purple: #5856d6;
+            --accent-green: #34c759;
+            --accent-orange: #ff9500;
+            --accent-red: #ff3b30;
+            --border-glass: rgba(255,255,255,0.08);
+            --border-highlight: rgba(255,255,255,0.15);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(88, 86, 214, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(0, 122, 255, 0.12) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
+        }
+        
+        /* 服务器配置页面 */
+        .config-page {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 50% 0%, rgba(88, 86, 214, 0.2) 0%, transparent 60%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .config-logo {
+            font-size: 72px;
+            margin-bottom: 16px;
+            animation: bounceIn 0.8s ease;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .config-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        
+        .config-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+        
+        .config-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .config-input-group {
+            margin-bottom: 20px;
+        }
+        
+        .config-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .config-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .config-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 4px rgba(0,122,255,0.15);
+        }
+        
+        .config-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        .config-btn {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+        }
+        
+        .config-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        
+        .config-hint {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        /* 主页面 */
+        .app-container {
+            padding: 20px 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* 顶部大标题 */
+        .app-header {
+            margin-bottom: 24px;
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .app-title {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .app-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .app-user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+        }
+        
+        .user-name {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .user-server {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: rgba(255,59,48,0.15);
+            border: 1px solid rgba(255,59,48,0.3);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-red);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .logout-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 页面内容区 */
+        .page-content {
+            display: none;
+            animation: pageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .page-content.active {
+            display: block;
+        }
+        
+        @keyframes pageSlideIn {
+            from { opacity: 0; transform: translateX(15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* 卡片样式 */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-highlight), transparent);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 统计卡片网格 */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 16px;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:active {
+            transform: scale(0.97);
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 44px;
+            padding: 0 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        
+        .btn:active {
+            transform: scale(0.96);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), #30d158);
+            color: white;
+            box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--accent-orange), #ffcc00);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,149,0,0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent-red), #ff6b6b);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,59,48,0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-glass);
+        }
+        
+        .btn-block {
+            width: 100%;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-group .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 4px rgba(0,122,255,0.15);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        
+        /* 表格样式 */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glass);
+            font-size: 13px;
+        }
+        
+        th {
+            background: rgba(255,255,255,0.05);
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* 底部 Dock 栏 */
+        .dock-bar {
+            position: fixed;
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 500px;
+            height: 64px;
+            background: var(--bg-dock);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 100;
+        }
+        
+        .dock-bar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-highlight), transparent);
+        }
+        
+        .dock-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .dock-item:active {
+            transform: scale(0.9);
+        }
+        
+        .dock-item.active {
+            background: rgba(0,122,255,0.15);
+        }
+        
+        .dock-item.active .dock-icon {
+            color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+        
+        .dock-item.active .dock-label {
+            color: var(--accent-blue);
+        }
+        
+        .dock-icon {
+            font-size: 22px;
+            transition: all 0.3s ease;
+        }
+        
+        .dock-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            transition: all 0.3s ease;
+        }
+        
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+        
+        @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-close:active {
+            transform: scale(0.9);
+        }
+        
+        /* 提示消息 */
+        .toast {
+            position: fixed;
+            top: calc(20px + env(safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 300;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: toastSlideDown 0.4s ease;
+        }
+        
+        @keyframes toastSlideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .toast.success { border-color: rgba(52,199,89,0.3); color: var(--accent-green); }
+        .toast.error { border-color: rgba(255,59,48,0.3); color: var(--accent-red); }
+        
+        /* 隐藏类 */
+        .hidden { display: none !important; }
+        
+        /* 响应式 */
+        @media (min-width: 768px) {
+            .app-container { padding: 24px 32px; }
+            .stat-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 服务器配置页面 -->
+<div id="configPage" class="config-page hidden">
+    <div class="config-logo">⚖️</div>
+    <div class="config-title">丝衡</div>
+    <div class="config-subtitle">智能耗材管理系统</div>
+    <div class="config-card">
+        <div class="config-input-group">
+            <label class="config-label">服务器地址</label>
+            <input type="text" id="serverUrlInput" class="config-input" placeholder="http://192.168.1.100:8000">
+        </div>
+        <button class="config-btn" onclick="saveServerConfig()">连接服务器</button>
+        <div class="config-hint">
+            请输入你的丝衡服务器地址<br>
+            例如：http://192.168.1.100:8000
+        </div>
+    </div>
+</div>
+
+<!-- 主应用 -->
+<div id="mainApp" class="app-container hidden">
+    <!-- 顶部 -->
+    <div class="app-header">
+        <div class="app-title">丝衡</div>
+        <div class="app-subtitle">智能耗材管理</div>
+        <div class="app-user-info">
+            <div>
+                <div class="user-name" id="currentUserName">用户</div>
+                <div class="user-server" id="currentServerUrl">-</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="logout-btn" onclick="changeServer()" style="background:rgba(0,122,255,0.15);border-color:rgba(0,122,255,0.3);color:var(--accent-blue);">⚙️ 服务器</button>
+                <button class="logout-btn" onclick="logout()">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面1：首页 -->
+    <div id="pageHome" class="page-content active">
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-title">耗材总数</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-title">在线设备</div>
+                <div class="stat-value" id="statOnline">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚖️</div>
+                <div class="stat-title">待确认</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-title">总重量</div>
+                <div class="stat-value" id="statWeight">0g</div>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="card-title">⚡ 快捷操作</div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="switchPage('filament')">📦 耗材管理</button>
+                <button class="btn btn-success" onclick="switchPage('scale')">⚖️ 称重工作台</button>
+                <button class="btn btn-warning" onclick="switchPage('device')">📡 设备管理</button>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="card-title">📋 最近待确认</div>
+            <div id="recentPendingList" style="color: var(--text-secondary); font-size: 14px; text-align: center; padding: 20px;">
+                暂无待确认记录
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面2：耗材管理 -->
+    <div id="pageFilament" class="page-content">
+        <div class="glass-card">
+            <div class="card-title">📦 耗材台账</div>
+            <div class="btn-group" style="margin-bottom: 16px;">
+                <button class="btn btn-primary btn-block" onclick="showAddFilamentModal()">➕ 添加耗材</button>
+                <button class="btn btn-secondary" onclick="loadFilaments()">🔄 刷新</button>
+            </div>
+            <div class="table-responsive">
+                <table id="filamentTable">
+                    <thead>
+                        <tr>
+                            <th>品牌</th>
+                            <th>材质</th>
+                            <th>颜色</th>
+                            <th>剩余</th>
+                            <th>NFC</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filamentTableBody">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-tertiary);">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面3：称重工作台 -->
+    <div id="pageScale" class="page-content">
+        <div class="glass-card">
+            <div class="card-title">⚖️ 称重工作台</div>
+            <button class="btn btn-secondary btn-block" onclick="loadScaleWorkbench()" style="margin-bottom: 16px;">🔄 刷新数据</button>
+            <div id="scaleCompareBox" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); border-radius: 16px; padding: 20px; margin-bottom: 16px; text-align: center; color: var(--text-tertiary);">
+                等待秤端上报数据...
+            </div>
+            <div id="scaleActionBtns" class="btn-group hidden" style="margin-bottom: 16px;">
+                <button class="btn btn-danger" onclick="confirmScaleAction('failure_correction')">🔴 失败纠正</button>
+                <button class="btn btn-primary" onclick="confirmScaleAction('normal_sync')">🔵 误差同步</button>
+                <button class="btn btn-success" onclick="newSpoolAction()">🟢 新料盘</button>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="card-title">📋 历史待确认</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>NFC</th><th>实测</th><th>预期</th><th>误差</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="pendingScaleBody">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-tertiary);">暂无记录</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面4：设备管理 -->
+    <div id="pageDevice" class="page-content">
+        <div class="glass-card">
+            <div class="card-title">📡 ESP32 设备状态</div>
+            <div id="espDeviceBox" style="font-size: 14px; line-height: 2;">
+                加载中...
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="card-title">🎮 远程控制</div>
+            <div class="btn-group" style="margin-bottom: 12px;">
+                <button class="btn btn-primary" onclick="switchDevicePage('weighing')">⚖️ 称重页</button>
+                <button class="btn btn-warning" onclick="switchDevicePage('wifi_config')">📶 WiFi页</button>
+                <button class="btn btn-secondary" onclick="switchDevicePage('device_info')">📱 信息页</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="openCalibrationModal()">🎯 校准向导</button>
+                <button class="btn btn-purple" onclick="switchDevicePartition()">🔄 切换分区</button>
+                <button class="btn btn-danger" onclick="resetDeviceConfig()">⚠️ 重置配网</button>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="card-title">🚀 固件更新</div>
+            <div style="display: grid; gap: 12px;">
+                <div style="background: rgba(52,199,89,0.1); border: 1px solid rgba(52,199,89,0.2); border-radius: 14px; padding: 16px;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">📤 本地固件</div>
+                    <div id="fwLocalVersionText" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">当前版本: -</div>
+                    <input type="file" id="fwFileInput" accept=".bin" style="margin-bottom: 10px; font-size: 12px; color: var(--text-secondary);">
+                    <input type="text" id="fwVersionInput" placeholder="版本号(可选)" class="form-input" style="margin-bottom: 10px; height: 38px; font-size: 13px;">
+                    <button class="btn btn-success btn-block" onclick="uploadFirmware()">上传固件</button>
+                    <button class="btn btn-primary btn-block" style="margin-top: 8px;" onclick="checkFwUpdate('local')">检查本地更新</button>
+                </div>
+                <div style="background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.2); border-radius: 14px; padding: 16px;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">🌐 GitHub 在线更新</div>
+                    <div id="fwGithubVersionText" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">当前版本: -</div>
+                    <button class="btn btn-primary btn-block" onclick="checkFwUpdate('github')">检查 GitHub 更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部 Dock 栏 -->
+<div class="dock-bar" id="dockBar">
+    <div class="dock-item active" onclick="switchPage('home')">
+        <div class="dock-icon">🏠</div>
+        <div class="dock-label">首页</div>
+    </div>
+    <div class="dock-item" onclick="switchPage('filament')">
+        <div class="dock-icon">📦</div>
+        <div class="dock-label">耗材</div>
+    </div>
+    <div class="dock-item" onclick="switchPage('scale')">
+        <div class="dock-icon">⚖️</div>
+        <div class="dock-label">称重</div>
+    </div>
+    <div class="dock-item" onclick="switchPage('device')">
+        <div class="dock-icon">📡</div>
+        <div class="dock-label">设备</div>
+    </div>
+</div>
+
+<!-- 弹窗容器 -->
+<div id="modalContainer"></div>
+
+<!-- Toast 容器 -->
+<div id="toastContainer"></div>
+
+<script>
+    // 全局变量
+    let BASE_URL = localStorage.getItem('siheng_server_url') || '';
+    let authToken = localStorage.getItem('siheng_token') || '';
+    let apiKey = localStorage.getItem('siheng_api_key') || '';
+    let currentUser = localStorage.getItem('siheng_username') || '';
+    let currentPage = 'home';
+    let globalFilaments = [];
+    let globalLatestFwUrl = '';
+    let globalFwSource = '';
+    let currentScalePending = null;
+    let espCurrentVersion = '1.0.0';
+
+    // 获取请求头（JWT 用于耗材，API Key 用于称重）
+    function getJwtHeaders() {
+        return {'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json'};
+    }
+    function getApiKeyHeaders() {
+        return {'X-API-Key': apiKey, 'Content-Type': 'application/json'};
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!BASE_URL) {
+            showConfigPage();
+        } else {
+            showMainApp();
+            if (authToken) {
+                loadHomeData();
+            } else {
+                showLoginModal();
+            }
+        }
+    });
+
+    // 显示配置页面
+    function showConfigPage() {
+        document.getElementById('configPage').classList.remove('hidden');
+        document.getElementById('mainApp').classList.add('hidden');
+        document.getElementById('dockBar').classList.add('hidden');
+    }
+
+    // 保存服务器配置
+    function saveServerConfig() {
+        const url = document.getElementById('serverUrlInput').value.trim();
+        if (!url) {
+            showToast('请输入服务器地址', 'error');
+            return;
+        }
+        BASE_URL = url.replace(/\/$/, '');
+        localStorage.setItem('siheng_server_url', BASE_URL);
+        showToast('服务器地址已保存', 'success');
+        setTimeout(() => {
+            showMainApp();
+            showLoginModal();
+        }, 500);
+    }
+
+    // 显示主应用
+    function showMainApp() {
+        document.getElementById('configPage').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('dockBar').classList.remove('hidden');
+        document.getElementById('currentServerUrl').textContent = BASE_URL;
+        if (currentUser) {
+            document.getElementById('currentUserName').textContent = currentUser;
+        }
+    }
+
+    // 显示登录弹窗
+    function showLoginModal() {
+        const modalHtml = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">🔐 登录</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">用户名</label>
+                        <input type="text" id="loginUsername" class="form-input" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="请输入密码">
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="doLogin()">登录</button>
+                    <div style="text-align: center; margin-top: 16px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">还没有账号？</span>
+                        <span style="color: var(--accent-blue); font-size: 13px; cursor: pointer;" onclick="showRegisterModal()">立即注册</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+    }
+
+    // 显示注册弹窗
+    function showRegisterModal() {
+        const modalHtml = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">📝 注册</div>
+                        <button class="modal-close" onclick="closeModal()">×</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">用户名</label>
+                        <input type="text" id="regUsername" class="form-input" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" id="regPassword" class="form-input" placeholder="请输入密码">
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="doRegister()">注册</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+    }
+
+    // 登录
+    async function doLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if (!username || !password) {
+            showToast('请输入用户名和密码', 'error');
+            return;
+        }
+        try {
+            // 登录用表单格式（OAuth2PasswordRequestForm）
+            const formData = new URLSearchParams();
+            formData.append('username', username);
+            formData.append('password', password);
+            
+            const res = await fetch(`${BASE_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: formData.toString()
+            });
+            const data = await res.json();
+            if (res.ok && data.access_token) {
+                authToken = data.access_token;
+                currentUser = username;
+                localStorage.setItem('siheng_token', authToken);
+                localStorage.setItem('siheng_username', currentUser);
+                document.getElementById('currentUserName').textContent = currentUser;
+                
+                // 登录成功后获取 API Key（用于称重相关接口）
+                try {
+                    const keyRes = await fetch(`${BASE_URL}/api/auth/quick-api-key`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({username, password})
+                    });
+                    const keyData = await keyRes.json();
+                    if (keyRes.ok && keyData.api_key) {
+                        apiKey = keyData.api_key;
+                        localStorage.setItem('siheng_api_key', apiKey);
+                    }
+                } catch (e) {
+                    console.log('获取 API Key 失败:', e);
+                }
+                
+                closeModal();
+                showToast('登录成功', 'success');
+                loadHomeData();
+            } else {
+                showToast(data.detail || '登录失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误，请检查服务器地址', 'error');
+        }
+    }
+
+    // 注册
+    async function doRegister() {
+        const username = document.getElementById('regUsername').value.trim();
+        const password = document.getElementById('regPassword').value;
+        if (!username || !password) {
+            showToast('请输入用户名和密码', 'error');
+            return;
+        }
+        try {
+            const res = await fetch(`${BASE_URL}/api/auth/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('注册成功，请登录', 'success');
+                setTimeout(() => showLoginModal(), 1000);
+            } else {
+                showToast(data.detail || '注册失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 退出登录
+    function logout() {
+        if (confirm('确定退出登录？')) {
+            authToken = '';
+            apiKey = '';
+            currentUser = '';
+            localStorage.removeItem('siheng_token');
+            localStorage.removeItem('siheng_api_key');
+            localStorage.removeItem('siheng_username');
+            showToast('已退出登录', 'success');
+            setTimeout(() => showLoginModal(), 500);
+        }
+    }
+    
+    // 修改服务器地址
+    function changeServer() {
+        if (confirm('确定修改服务器地址？将退出当前登录。')) {
+            authToken = '';
+            apiKey = '';
+            currentUser = '';
+            localStorage.removeItem('siheng_token');
+            localStorage.removeItem('siheng_api_key');
+            localStorage.removeItem('siheng_username');
+            localStorage.removeItem('siheng_server_url');
+            BASE_URL = '';
+            showConfigPage();
+        }
+    }
+
+    // 关闭弹窗
+    function closeModal() {
+        document.getElementById('modalContainer').innerHTML = '';
+    }
+
+    // 显示 Toast
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-20px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
+    // 切换页面
+    function switchPage(page) {
+        currentPage = page;
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
+        
+        document.querySelectorAll('.dock-item').forEach(item => item.classList.remove('active'));
+        const dockIndex = {home: 0, filament: 1, scale: 2, device: 3}[page];
+        if (dockIndex !== undefined) {
+            document.querySelectorAll('.dock-item')[dockIndex].classList.add('active');
+        }
+
+        if (page === 'filament') loadFilaments();
+        if (page === 'scale') loadScaleWorkbench();
+        if (page === 'device') loadEspDeviceInfo();
+    }
+
+    // 加载首页数据
+    async function loadHomeData() {
+        if (!authToken) return;
+        try {
+            const [filamentsRes, statusRes, pendingRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/filaments`, {headers: {'Authorization': 'Bearer ' + authToken}}),
+                fetch(`${BASE_URL}/api/scale/device/status?device_id=scale_001`, {headers: {'Authorization': 'Bearer ' + authToken}}),
+                fetch(`${BASE_URL}/api/scale/status`, {headers: {'Authorization': 'Bearer ' + authToken}})
+            ]);
+            
+            if (filamentsRes.ok) {
+                const filaments = await filamentsRes.json();
+                globalFilaments = filaments;
+                document.getElementById('statTotal').textContent = filaments.length;
+                const totalWeight = filaments.reduce((sum, f) => sum + (f.current_weight_g || 0), 0);
+                document.getElementById('statWeight').textContent = totalWeight.toFixed(0) + 'g';
+            }
+            
+            if (statusRes.ok) {
+                const status = await statusRes.json();
+                document.getElementById('statOnline').textContent = status.online ? '1' : '0';
+                espCurrentVersion = status.firmware_version || '1.0.0';
+            }
+            
+            if (pendingRes.ok) {
+                const pending = await pendingRes.json();
+                const pendingCount = pending.items ? pending.items.length : 0;
+                document.getElementById('statPending').textContent = pendingCount;
+            }
+        } catch (e) {
+            console.log('加载首页数据失败:', e);
+        }
+    }
+
+    // 加载耗材列表
+    async function loadFilaments() {
+        if (!authToken) return;
+        try {
+            const res = await fetch(`${BASE_URL}/api/filaments`, {headers: {'Authorization': 'Bearer ' + authToken}});
+            if (res.ok) {
+                const filaments = await res.json();
+                globalFilaments = filaments;
+                const tbody = document.getElementById('filamentTableBody');
+                if (filaments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-tertiary);">暂无耗材</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = filaments.map(f => `
+                    <tr>
+                        <td>${f.brand || '-'}</td>
+                        <td>${f.material || '-'}</td>
+                        <td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${f.color_hex || '#888'};vertical-align:middle;margin-right:6px;"></span>${f.color_name || '-'}</td>
+                        <td>${(f.current_weight_g || 0).toFixed(0)}g</td>
+                        <td style="font-size:11px;color:var(--text-tertiary);">${f.nfc_uid ? f.nfc_uid.substring(0,8) + '...' : '未绑定'}</td>
+                        <td><button class="btn btn-secondary" style="height:32px;padding:0 10px;font-size:12px;" onclick="editFilament(${f.id})">编辑</button></td>
+                    </tr>
+                `).join('');
+            }
+        } catch (e) {
+            showToast('加载耗材失败', 'error');
+        }
+    }
+
+    // 显示添加耗材弹窗
+    function showAddFilamentModal() {
+        const modalHtml = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">➕ 添加耗材</div>
+                        <button class="modal-close" onclick="closeModal()">×</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">品牌</label>
+                            <input type="text" id="fBrand" class="form-input" placeholder="Bambu Lab">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">材质</label>
+                            <input type="text" id="fMaterial" class="form-input" placeholder="PLA">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">颜色名称</label>
+                            <input type="text" id="fColorName" class="form-input" placeholder="黑色">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">颜色值</label>
+                            <input type="color" id="fColorHex" class="form-input" value="#000000" style="padding:4px;">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">初始重量(g)</label>
+                            <input type="number" id="fInitialWeight" class="form-input" value="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前重量(g)</label>
+                            <input type="number" id="fCurrentWeight" class="form-input" value="1000">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">NFC UID (可选)</label>
+                        <input type="text" id="fNfcUid" class="form-input" placeholder="扫描NFC后自动填入">
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="saveFilament()">保存</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+    }
+
+    // 保存耗材
+    async function saveFilament() {
+        const data = {
+            brand: document.getElementById('fBrand').value.trim(),
+            material: document.getElementById('fMaterial').value.trim(),
+            color_name: document.getElementById('fColorName').value.trim(),
+            color_hex: document.getElementById('fColorHex').value,
+            initial_weight_g: parseFloat(document.getElementById('fInitialWeight').value) || 1000,
+            current_weight_g: parseFloat(document.getElementById('fCurrentWeight').value) || 1000,
+            nfc_uid: document.getElementById('fNfcUid').value.trim() || null
+        };
+        try {
+            const res = await fetch(`${BASE_URL}/api/filaments`, {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                showToast('耗材添加成功', 'success');
+                closeModal();
+                loadFilaments();
+                loadHomeData();
+            } else {
+                const err = await res.json();
+                showToast(err.detail || '添加失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 编辑耗材
+    function editFilament(id) {
+        const f = globalFilaments.find(x => x.id === id);
+        if (!f) return;
+        const modalHtml = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">✏️ 编辑耗材</div>
+                        <button class="modal-close" onclick="closeModal()">×</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">品牌</label>
+                            <input type="text" id="fBrand" class="form-input" value="${f.brand || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">材质</label>
+                            <input type="text" id="fMaterial" class="form-input" value="${f.material || ''}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">颜色名称</label>
+                            <input type="text" id="fColorName" class="form-input" value="${f.color_name || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">颜色值</label>
+                            <input type="color" id="fColorHex" class="form-input" value="${f.color_hex || '#000000'}" style="padding:4px;">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">当前重量(g)</label>
+                            <input type="number" id="fCurrentWeight" class="form-input" value="${f.current_weight_g || 0}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">NFC UID</label>
+                            <input type="text" id="fNfcUid" class="form-input" value="${f.nfc_uid || ''}">
+                        </div>
+                    </div>
+                    <div class="btn-group" style="margin-top:16px;">
+                        <button class="btn btn-danger" onclick="deleteFilament(${f.id})">🗑️ 删除</button>
+                        <button class="btn btn-primary" onclick="updateFilament(${f.id})">💾 保存</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+    }
+
+    // 更新耗材
+    async function updateFilament(id) {
+        const data = {
+            brand: document.getElementById('fBrand').value.trim(),
+            material: document.getElementById('fMaterial').value.trim(),
+            color_name: document.getElementById('fColorName').value.trim(),
+            color_hex: document.getElementById('fColorHex').value,
+            current_weight_g: parseFloat(document.getElementById('fCurrentWeight').value) || 0,
+            nfc_uid: document.getElementById('fNfcUid').value.trim() || null
+        };
+        try {
+            const res = await fetch(`${BASE_URL}/api/filaments/${id}`, {
+                method: 'PUT',
+                headers: {'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                showToast('更新成功', 'success');
+                closeModal();
+                loadFilaments();
+                loadHomeData();
+            } else {
+                showToast('更新失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 删除耗材
+    async function deleteFilament(id) {
+        if (!confirm('确定删除这个耗材？')) return;
+        try {
+            const res = await fetch(`${BASE_URL}/api/filaments/${id}`, {
+                method: 'DELETE',
+                headers: {'Authorization': 'Bearer ' + authToken}
+            });
+            if (res.ok) {
+                showToast('删除成功', 'success');
+                closeModal();
+                loadFilaments();
+                loadHomeData();
+            } else {
+                showToast('删除失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 加载称重工作台
+    async function loadScaleWorkbench() {
+        if (!apiKey) {
+            showToast('请先登录获取 API Key', 'error');
+            return;
+        }
+        try {
+            const res = await fetch(`${BASE_URL}/api/scale/status`, {headers: {'X-API-Key': apiKey}});
+            if (res.ok) {
+                const data = await res.json();
+                const compareBox = document.getElementById('scaleCompareBox');
+                const pendingBody = document.getElementById('pendingScaleBody');
+                
+                if (!data || data.length === 0) {
+                    compareBox.innerHTML = '<div style="color:var(--text-tertiary);">无待确认称重记录</div>';
+                    document.getElementById('scaleActionBtns').classList.add('hidden');
+                    pendingBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);">暂无记录</td></tr>';
+                    return;
+                }
+                
+                const p = data[0];
+                currentScalePending = p;
+                const filament = globalFilaments.find(f => f.nfc_uid === p.nfc_uid);
+                compareBox.innerHTML = `
+                    <div style="display:grid;gap:12px;">
+                        <div style="font-size:13px;color:var(--text-secondary);">NFC: ${p.nfc_uid || '未知'}</div>
+                        <div style="font-size:13px;color:var(--text-secondary);">耗材: ${p.filament_name || '未绑定'}</div>
+                        <div style="display:flex;justify-content:space-around;align-items:center;padding:16px 0;">
+                            <div style="text-align:center;">
+                                <div style="font-size:12px;color:var(--text-secondary);">实测重量</div>
+                                <div style="font-size:28px;font-weight:700;color:var(--accent-green);">${(p.measured_weight_g || 0).toFixed(1)}g</div>
+                            </div>
+                            <div style="font-size:24px;color:var(--text-tertiary);">VS</div>
+                            <div style="text-align:center;">
+                                <div style="font-size:12px;color:var(--text-secondary);">账面重量</div>
+                                <div style="font-size:28px;font-weight:700;color:var(--accent-blue);">${(p.expected_weight_g || 0).toFixed(1)}g</div>
+                            </div>
+                        </div>
+                        <div style="text-align:center;font-size:16px;font-weight:600;color:${p.difference_g < 0 ? 'var(--accent-red)' : 'var(--accent-green)'};">
+                            误差: ${p.difference_g > 0 ? '+' : ''}${(p.difference_g || 0).toFixed(1)}g
+                        </div>
+                    </div>
+                `;
+                document.getElementById('scaleActionBtns').classList.remove('hidden');
+                
+                pendingBody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>${item.pending_id}</td>
+                        <td style="font-size:11px;">${item.nfc_uid || '-'}</td>
+                        <td>${(item.measured_weight_g || 0).toFixed(0)}g</td>
+                        <td>${(item.expected_weight_g || 0).toFixed(0)}g</td>
+                        <td style="color:${item.difference_g < 0 ? 'var(--accent-red)' : 'var(--accent-green)'};">${item.difference_g > 0 ? '+' : ''}${(item.difference_g || 0).toFixed(0)}g</td>
+                        <td><button class="btn btn-secondary" style="height:28px;padding:0 8px;font-size:11px;" onclick="confirmScaleActionById(${item.pending_id}, 'normal_sync')">同步</button></td>
+                    </tr>
+                `).join('');
+            }
+        } catch (e) {
+            showToast('加载称重数据失败', 'error');
+        }
+    }
+
+    // 确认称重操作
+    async function confirmScaleAction(actionType) {
+        if (!currentScalePending) return;
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        const actionName = {failure_correction: '打印失败纠正', normal_sync: '常规误差同步'}[actionType] || '同步';
+        if (!confirm(`确认执行「${actionName}」？`)) return;
+        try {
+            const res = await fetch(`${BASE_URL}/api/scale/pending/${currentScalePending.pending_id}/confirm`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                body: JSON.stringify({action_type: actionType, confirmed_weight: currentScalePending.measured_weight_g})
+            });
+            if (res.ok) {
+                showToast('操作成功', 'success');
+                loadScaleWorkbench();
+                loadHomeData();
+            } else {
+                const err = await res.json();
+                showToast(err.detail || '操作失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 按ID确认
+    async function confirmScaleActionById(id, actionType) {
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            const res = await fetch(`${BASE_URL}/api/scale/pending/${id}/confirm`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                body: JSON.stringify({action_type: actionType})
+            });
+            if (res.ok) {
+                showToast('操作成功', 'success');
+                loadScaleWorkbench();
+                loadHomeData();
+            } else {
+                showToast('操作失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 新料盘操作
+    function newSpoolAction() {
+        showToast('请在耗材管理页面添加新耗材', 'success');
+        switchPage('filament');
+    }
+
+    // 加载设备信息
+    async function loadEspDeviceInfo() {
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            const res = await fetch(`${BASE_URL}/api/scale/device/status?device_id=scale_001&_t=${Date.now()}`, {headers: {'X-API-Key': apiKey}});
+            if (res.ok) {
+                const dev = await res.json();
+                espCurrentVersion = dev.firmware_version || '1.0.0';
+                document.getElementById('fwLocalVersionText').textContent = `当前版本: v${espCurrentVersion}`;
+                document.getElementById('fwGithubVersionText').textContent = `当前版本: v${espCurrentVersion}`;
+                
+                const freeHeapKB = dev.free_heap ? (dev.free_heap / 1024).toFixed(1) : '-';
+                const freeSpaceKB = dev.free_sketch_space ? (dev.free_sketch_space / 1024).toFixed(1) : '-';
+                
+                document.getElementById('espDeviceBox').innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><span style="color:var(--text-secondary);font-size:12px;">状态</span><br><span style="font-weight:600;color:${dev.online ? 'var(--accent-green)' : 'var(--accent-red)'};">${dev.online ? '🟢 在线' : '🔴 离线'}</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">IP地址</span><br><span style="font-weight:600;">${dev.ip_address || '-'}</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">固件版本</span><br><span style="font-weight:600;">v${dev.firmware_version || '-'}</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">当前分区</span><br><span style="font-weight:600;color:var(--accent-blue);">${dev.current_partition || '-'}</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">剩余内存</span><br><span style="font-weight:600;">${freeHeapKB} KB</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">剩余存储</span><br><span style="font-weight:600;">${freeSpaceKB} KB</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">内核版本</span><br><span style="font-size:11px;font-weight:600;">${dev.sdk_version || '-'}</span></div>
+                        <div><span style="color:var(--text-secondary);font-size:12px;">WiFi信号</span><br><span style="font-weight:600;">${dev.wifi_rssi || '-'} dBm</span></div>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            document.getElementById('espDeviceBox').innerHTML = '<span style="color:var(--accent-red);">网络错误</span>';
+        }
+    }
+
+    // 切换设备页面
+    async function switchDevicePage(page) {
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            await fetch(`${BASE_URL}/api/scale/device/command`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                body: JSON.stringify({device_id: 'scale_001', command: 'switch_page', params: {page}})
+            });
+            showToast('指令已下发', 'success');
+        } catch (e) {
+            showToast('下发失败', 'error');
+        }
+    }
+
+    // 切换分区
+    async function switchDevicePartition() {
+        if (!confirm('确认切换到另一个分区？设备将自动重启。')) return;
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            await fetch(`${BASE_URL}/api/scale/device/switch_partition?device_id=scale_001`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey}
+            });
+            showToast('切换分区指令已下发', 'success');
+        } catch (e) {
+            showToast('下发失败', 'error');
+        }
+    }
+
+    // 重置配网
+    async function resetDeviceConfig() {
+        if (!confirm('确认重置配网？设备将清除WiFi配置并重启。')) return;
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            await fetch(`${BASE_URL}/api/scale/device/command`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                body: JSON.stringify({device_id: 'scale_001', command: 'reset_config'})
+            });
+            showToast('重置配网指令已下发', 'success');
+        } catch (e) {
+            showToast('下发失败', 'error');
+        }
+    }
+
+    // 校准向导
+    function openCalibrationModal() {
+        const modalHtml = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">🎯 传感器校准向导</div>
+                        <button class="modal-close" onclick="closeModal()">×</button>
+                    </div>
+                    <div style="line-height:1.8;color:var(--text-secondary);font-size:14px;">
+                        <p><strong>步骤1：</strong>确保秤上没有任何物品</p>
+                        <p><strong>步骤2：</strong>点击"开始去皮"，等待清零完成</p>
+                        <p><strong>步骤3：</strong>在秤上放置已知重量的砝码（如500g）</p>
+                        <p><strong>步骤4：</strong>输入砝码重量，点击"开始校准"</p>
+                    </div>
+                    <div class="btn-group" style="margin-top:20px;">
+                        <button class="btn btn-primary btn-block" onclick="sendTareCommand()">1️⃣ 开始去皮</button>
+                    </div>
+                    <div class="form-group" style="margin-top:16px;">
+                        <label class="form-label">砝码重量(g)</label>
+                        <input type="number" id="calWeight" class="form-input" value="500">
+                    </div>
+                    <button class="btn btn-success btn-block" onclick="sendCalibrateCommand()">2️⃣ 开始校准</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').innerHTML = modalHtml;
+    }
+
+    // 发送去皮指令
+    async function sendTareCommand() {
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            await fetch(`${BASE_URL}/api/scale/device/command`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                body: JSON.stringify({device_id: 'scale_001', command: 'tare'})
+            });
+            showToast('去皮指令已下发，请等待5秒', 'success');
+        } catch (e) {
+            showToast('下发失败', 'error');
+        }
+    }
+
+    // 发送校准指令
+    async function sendCalibrateCommand() {
+        const weight = parseFloat(document.getElementById('calWeight').value) || 500;
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            await fetch(`${BASE_URL}/api/scale/device/command`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                body: JSON.stringify({device_id: 'scale_001', command: 'calibrate', params: {weight}})
+            });
+            showToast('校准指令已下发，请等待5秒', 'success');
+            setTimeout(() => closeModal(), 2000);
+        } catch (e) {
+            showToast('下发失败', 'error');
+        }
+    }
+
+    // 版本比较
+    function compareVersions(v1, v2) {
+        const parts1 = v1.replace(/^v/, '').split('.').map(Number);
+        const parts2 = v2.replace(/^v/, '').split('.').map(Number);
+        for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+            const p1 = parts1[i] || 0;
+            const p2 = parts2[i] || 0;
+            if (p1 > p2) return 1;
+            if (p1 < p2) return -1;
+        }
+        return 0;
+    }
+
+    // 检查固件更新
+    async function checkFwUpdate(source) {
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        try {
+            const url = `${BASE_URL}/api/scale/ota_check?source=${source}`;
+            const res = await fetch(url, {headers: {'X-API-Key': apiKey}});
+            const data = await res.json();
+            
+            if (data.status === 'success' && compareVersions(data.latest_version, espCurrentVersion) > 0) {
+                globalLatestFwUrl = data.download_url;
+                globalFwSource = data.source || source;
+                
+                if (confirm(`发现新版本 v${data.latest_version}（${source === 'local' ? '本地固件' : 'GitHub'}）\n当前版本: v${espCurrentVersion}\n\n是否立即升级？`)) {
+                    await fetch(`${BASE_URL}/api/scale/ota/push`, {
+                        method: 'POST',
+                        headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+                        body: JSON.stringify({download_url: globalLatestFwUrl})
+                    });
+                    showToast('升级指令已下发', 'success');
+                }
+            } else {
+                alert(`已是最新版本（${source === 'local' ? '本地固件' : 'GitHub'}）\n当前版本: v${espCurrentVersion}\n远程版本: v${data.latest_version || '未知'}`);
+            }
+        } catch (e) {
+            showToast('检查更新失败', 'error');
+        }
+    }
+
+    // 上传固件
+    async function uploadFirmware() {
+        const fileInput = document.getElementById('fwFileInput');
+        const versionInput = document.getElementById('fwVersionInput');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            showToast('请选择固件文件', 'error');
+            return;
+        }
+        if (!apiKey) { showToast('请先登录', 'error'); return; }
+        const file = fileInput.files[0];
+        if (!file.name.endsWith('.bin')) {
+            showToast('仅支持 .bin 格式', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        if (versionInput.value.trim()) {
+            formData.append('version', versionInput.value.trim());
+        }
+        
+        showToast('正在上传...', 'success');
+        try {
+            const res = await fetch(`${BASE_URL}/api/scale/firmware/upload`, {
+                method: 'POST',
+                headers: {'X-API-Key': apiKey},
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                showToast('固件上传成功', 'success');
+                versionInput.value = '';
+                fileInput.value = '';
+            } else {
+                showToast(data.detail || data.message || '上传失败', 'error');
+            }
+        } catch (e) {
+            showToast('上传失败', 'error');
+        }
+    }
+</script>
+</body>
+</html>
